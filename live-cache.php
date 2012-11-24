@@ -3,61 +3,83 @@
 /*
  * Handles ajax requests with cached values as early as possible.
  * 
- * Note: All values stored and passed by this plugin are sanitized using sanitize_text_field
- * If you need to send something more complex, consider using this as a flag to trigger
- * an ajax request or a refresh.
- * 
+ * Installation suggestion: Instead of activating this plugin normally, call it from the top
+ * of functions.php for even faster response and less load on the server.
+ * require_once( path/to/plugin/live-cache/live-cache.php' );
  * 
  */
 
 class Live_Cache {
+	
+	// set $show_options and/or $show_widget to false if you are including in another project and want to handle this differently
+	// todo make filterable
+	var $show_options = true;
+	var $show_widget = true;
+	var $minimum_refresh_rate = 2;
+	
 	// Check for live_cache_check on init. If set return cached value
 	public function __construct() {
 
 		/* By running this check as soon as the class is initialized instead of on action,
-		 * we can skip most of the theme being loaded.
+		 * we can skip most of the theme being loaded. ouput and die.
 		 */
 		if ( isset( $_GET['live_cache_check'] ) && $_GET['live_cache_check'] ) {
-
-			// js esc instead of sanitize?
-			$live_cache = array_map ( 'sanitize_text_field', (array) get_option( 'live_cache' ) );
-			//$live_cache['ts'] = time();
-
-			// output content and die here
 			header( 'Content-Type: application/json' );
 			nocache_headers(); //essential for getting date that is used for incrementing the timestamp
-			echo json_encode( $live_cache );
+			echo json_encode( (array) get_option( 'live_cache' ) );
 			die();
 		}
 		
-		// This was not a live-cache check. So let's set up the rest of the class and let the rest of the theme load.
+		// ok, this was not a live-cache check. so let's set up the rest of the class and let the rest of the theme load.
 
-		add_action( 'init', array( $this, 'init' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'wp_enqueue_scripts' ) );
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
+
+		/* This one is a bit unusual. We are making it possible to plug-in to this plugin by
+		 * reversing the hook and allowing the other plugin to trigger an action that we process.
+		 */
+		add_action( 'live_cache_set_value', array( $this, 'live_cache_set_value' ), 10, 2 );
+
+		// Demo code and a small widget to make this plug-in do something fresh out of the box
+		if ( $this->show_widget )
+			require_once( __DIR__ . '/live-cache-widget.php' );
 	}
 
-	public function init() {
+	public function wp_enqueue_scripts() {
 		// embed the javascript file that makes the AJAX request
 		wp_enqueue_script( 'live-cache', plugin_dir_url( __FILE__ ) . 'live-cache.js', array( 'jquery' ) );
 
-		// declare the URL to the file that handles the AJAX request (wp-admin/admin-ajax.php)
-		wp_localize_script( 'live-cache', 'Live_Cache', array( 'ajaxurl' => get_bloginfo('url') ) );
-
-		$live_cache = get_option( 'live_cache' );
-
-		// Set value. Create option if necessary.
-		if ( is_array( $live_cache ) ) { 
-			update_option( 'live_cache', apply_filters( 'live_cache_values', $live_cache ) );
-		} else {
-			add_option( 'live_cache', apply_filters( 'live_cache_values', $live_cache ), '', true );
-		}
+		/* pass in the url where we will be checking for updates along with a list of keys to monitor and where
+		 * to put their values. filter live_cache_auto_updates to set a key and selector. see live-cache-widget.php
+		 * for sample usage. wp_localize_script handles output sanitization for us. don't double escape. do verify
+		 * you are passing valid input.
+		 * 
+		 * Note: no point in passing a timestamp here. It will get cached and be as out of date as the rest.
+		 */
+		wp_localize_script( 'live-cache', 'Live_Cache', array( 'ajaxurl' => get_bloginfo('url'), 'auto_updates' => apply_filters( 'live_cache_auto_updates', array() ) ) );
 	}
 
 	public function admin_init() {
-		// add refresh rate option to the reading settings page
-		register_setting( 'reading', 'live_cache_refresh_rate', array( $this, 'sanitize_options' ) ); //live_cache_check includes all of the values we are passing back thru ajax including the refresh rate controled here.
-		add_settings_section( 'live-cache', '', '__return_false', 'reading' );
-		add_settings_field( 'refresh_rate', 'Live Cache Refresh Rate', array( $this, 'settings_field_refresh_rate' ), 'reading', 'live-cache' );
+		if ( $this->show_options ) {
+			// add refresh rate option to the reading settings page
+			register_setting( 'reading', 'live_cache_refresh_rate', array( $this, 'sanitize_options' ) ); //live_cache_check includes all of the values we are passing back thru ajax including the refresh rate controled here.
+			add_settings_section( 'live-cache', '', '__return_false', 'reading' );
+			add_settings_field( 'refresh_rate', 'Live Cache Refresh Rate', array( $this, 'settings_field_refresh_rate' ), 'reading', 'live-cache' );
+		}
+	}
+
+	public function live_cache_set_value( $key, $value ) {
+		$live_cache = get_option( 'live_cache' );
+		$key = sanitize_key( $key );
+
+		// Set value. Create option if necessary.
+		if ( is_array( $live_cache ) ) { 
+			$live_cache[$key] = sanitize_text_field( $value );
+			update_option( 'live_cache', $live_cache );
+		} else {
+			$live_cache = array( $key => sanitize_text_field( $value ) );
+			add_option( 'live_cache', $live_cache, '', true );
+		}
 	}
 
 	public function settings_field_refresh_rate() {
@@ -70,12 +92,11 @@ class Live_Cache {
 
 	public function sanitize_options( $input ) {
 		$new_input = (int) $input;
-		if ( $new_input < 2 ) 
-			$new_input = 2;
-		
-		$live_cache = (array) get_option( 'live_cache' );
-		$live_cache['refresh_rate'] = $new_input;
-		update_option( 'live_cache', $live_cache );
+		if ( $new_input < $this->minimum_refresh_rate ) 
+			$new_input = $this->minimum_refresh_rate;
+
+		// do live_cache_set_value action - same method that could be used by other plugins that extend this plugin.
+		do_action( 'live_cache_set_value', 'refresh_rate', $new_input );
 
 		return $new_input;
 	}
@@ -83,25 +104,3 @@ class Live_Cache {
 }
 
 $live_cache = new Live_Cache();
-
-
-
-
-// Usage
-function tc_demo_live_cache ( $values ) {
-	$values['time'] = rand(1,12)."pm";
-	return $values;
-}
-add_filter( 'live_cache_values', 'tc_demo_live_cache', 10, 1 );
-
-function tc_demo_live_cache_print_footer_scripts() {
-		?>
-<script>
-TC_Live_Cache.setCallback('time', function(value){
-	console.log('Still working: '+value);
-});
-</script>
-		<?php
-	}
-
-add_action( 'wp_print_footer_scripts', 'tc_demo_live_cache_print_footer_scripts');
