@@ -27,7 +27,7 @@ function Live_Cache_Obj() {
 
 	this.check = function () {
 		jQuery.get(
-			ajaxurl+'/live_cache_check/'+timeStamp+'/',
+			ajaxurl + '/live_cache_check/' + timeStamp + '/',
 			function (data, s, resp) {
 				var time = resp.getResponseHeader('Date').split(" ")[4];
 				// look only at the tens place of the second counter to refresh cache every ten seconds.
