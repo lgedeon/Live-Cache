@@ -67,7 +67,7 @@ class Live_Cache {
 	}
 
 	public function init() {
-		add_rewrite_rule('^live_cache_check/([\d]+)/?','index.php?live_cache_check=$matches[0]','top'); 
+		add_rewrite_rule( '^live_cache_check/([\d]+)/?', 'index.php?live_cache_check=$matches[0]', 'top' );
 	}
 
 	public function admin_init() {
