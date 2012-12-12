@@ -36,7 +36,6 @@ class Live_Cache {
 		}
 		
 		// ok, this was not a live-cache check. so let's set up the rest of the class and let the rest of the theme load.
-
 		add_action( 'init', array( $this, 'init' ) );
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'wp_enqueue_scripts' ) );
