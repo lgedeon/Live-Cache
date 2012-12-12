@@ -50,10 +50,12 @@ var Live_Cache = new Live_Cache_Obj();
 /*
  * parse requests to directly output to page
  */
-for (key in Live_Cache.auto_updates) {
-	Live_Cache.setCallback(key, function (key, value) {
-		jQuery(Live_Cache.auto_updates[key]).html(value);
-	});
+for (var key in Live_Cache.auto_updates) {
+	if(Live_Cache.auto_updates.hasOwnProperty(key)) {
+		Live_Cache.setCallback(key, function (k, v) {
+			jQuery(Live_Cache.auto_updates[k]).html(v);
+		});
+	}
 }
 
 
