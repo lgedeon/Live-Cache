@@ -17,17 +17,17 @@ class Live_Cache_Widget extends WP_Widget {
 	}
 
 	function widget( $args, $instance ) {
-		extract($args);
+		wp_parse_args( $args, array( 'before_widget' => '', 'after_widget' => '', 'before_title' => '', 'after_title' => '' ) );
 		$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? '' : $instance['title'], $instance, $this->id_base );
 		$text = apply_filters( 'widget_text', empty( $instance['text'] ) ? '' : $instance['text'], $instance );
-		echo $before_widget;
+		echo $args['before_widget'];
 		if ( !empty( $title ) ) {
-			echo $before_title . $title . $after_title;
+			echo $args['before_title'] . $title . $args['after_title'];
 		}
 		?>
-			<div class="livecachewidget"><?php echo empty( $instance['filter'] ) ? $text : wpautop( $text ); ?></div>
+			<div class="livecachewidget"><?php echo !empty( $instance['filter'] ) ? wpautop( $text ) : $text; ?></div>
 		<?php
-		echo $after_widget;
+		echo $args['after_widget'];
 	}
 
 	function update( $new_instance, $old_instance ) {

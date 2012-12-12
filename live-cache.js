@@ -15,7 +15,7 @@ function Live_Cache_Obj() {
 	// schedule first check
 	this.timer = setInterval(function () {
 		Live_Cache.check();
-	}, 6000);
+	}, 10000);
 
 	// to customize what happens when a value is updated, set a callback for that key
 	this.setCallback = function (key, callback ) {
@@ -27,10 +27,10 @@ function Live_Cache_Obj() {
 
 	this.check = function () {
 		jQuery.get(
-			ajaxurl,
-			{ "live_cache_check": timeStamp },
+			ajaxurl+'/live_cache_check/'+timeStamp+'/',
 			function (data, s, resp) {
 				var time = resp.getResponseHeader('Date').split(" ")[4];
+				// look only at the tens place of the second counter to refresh cache every ten seconds.
 				timeStamp = time.substr(0,2) + time.substr(3,2) + time.substr(6,1);
 				jQuery.each(data, function(key, value) {
 					if ( typeof callbacks[key] !== "undefined" && (typeof values[key] == "undefined" || values[key] !== value) ){
