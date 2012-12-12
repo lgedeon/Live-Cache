@@ -5,13 +5,13 @@ class Live_Cache_Widget extends WP_Widget {
 	function __construct() {
 		$widget_ops = array(
 			'classname' => 'live_cache_widget',
-			'description' => __('The contents of this widget will be updated on all open pages within a minute of you saving it here. This will happen automatically without anyone needing to refresh their browser.')
+			'description' => __( 'The contents of this widget will be updated on all open pages within a minute of you saving it here. This will happen automatically without anyone needing to refresh their browser.' )
 		);
 		$control_ops = array(
 			'width' => 400,
 			'height' => 350
 		);
-		parent::__construct('live-cache-widget', __('Live Cache Widget'), $widget_ops, $control_ops);
+		parent::__construct( 'live-cache-widget', __( 'Live Cache Widget' ), $widget_ops, $control_ops );
 
 		add_filter( 'live_cache_auto_updates', array( $this, 'live_cache_auto_updates' ) );
 	}
@@ -61,8 +61,8 @@ class Live_Cache_Widget extends WP_Widget {
 
 	// register two places per widget instance on the front-end where data should be updated when it changes.
 	function live_cache_auto_updates( $updates ) {
-		$updates[ $this->id . '-title' ] = "#$this->id h2";
-		$updates[ $this->id . '-text' ] = "#$this->id div";
+		$updates[ $this->id . '-title' ] = "#{$this}->id h2";
+		$updates[ $this->id . '-text' ] = "#{$this}->id div";
 
 		return $updates;
 	}
