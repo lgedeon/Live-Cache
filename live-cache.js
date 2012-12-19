@@ -8,7 +8,9 @@ function Live_Cache_Obj() {
 		ajaxurl = Live_Cache.ajaxurl,
 		values = [],
 		callbacks = [],
-		timeStamp = 1;
+		timeStamp = 1,
+		minRefresh = 60
+		errs = 0;
 
 	this.auto_updates = Live_Cache.auto_updates;
 		
@@ -26,10 +28,14 @@ function Live_Cache_Obj() {
 	};
 
 	this.check = function () {
-		jQuery.get(
-			ajaxurl + '/live_cache_check/' + timeStamp + '/',
-			function (data, s, resp) {
+		jQuery.ajax({
+			url: ajaxurl + '/live_cache_check/' + timeStamp + '/',
+			sucess: function (data, s, resp) {
 				var time = resp.getResponseHeader('Date').split(" ")[4];
+				// check our special variable refresh_rate - if it is not set we need to set a default
+				if ( typeof data['refresh_rate'] === "undefined" || data['refresh_rate'] < minRefresh ){
+					data['refresh_rate'] = minRefresh * 2;
+				}
 				// look only at the tens place of the second counter to refresh cache every ten seconds.
 				timeStamp = time.substr(0,2) + time.substr(3,2) + time.substr(6,1);
 				jQuery.each(data, function(key, value) {
@@ -39,8 +45,11 @@ function Live_Cache_Obj() {
 				});
 				values = data;
 			},
-			"json"
-		);
+			dataType: "json",
+			error: function(XMLHttpRequest, textStatus, errorThrown){
+				callbacks['refresh_rate'].fire('refresh_rate', minRefresh * ++errs);
+			}
+		});
 	};
 }
 

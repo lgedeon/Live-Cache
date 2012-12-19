@@ -61,8 +61,8 @@ class Live_Cache_Widget extends WP_Widget {
 
 	// register two places per widget instance on the front-end where data should be updated when it changes.
 	function live_cache_auto_updates( $updates ) {
-		$updates[ $this->id . '-title' ] = "#{$this}->id h2";
-		$updates[ $this->id . '-text' ] = "#{$this}->id div";
+		$updates[ $this->id . '-title' ] = "#{$this->id} h2";
+		$updates[ $this->id . '-text' ] = "#{$this->id} div";
 
 		return $updates;
 	}

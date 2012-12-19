@@ -20,7 +20,7 @@ class Live_Cache {
 	// todo make filterable or pass parameters into construct
 	var $show_options = true;
 	var $show_widget = true;
-	var $minimum_refresh_rate = 60;
+	var $minimum_refresh_rate = 60; // if you lower this here, check minRefresh in live-cache.js
 	
 	// Check for live_cache_check on init. If set return cached value
 	public function __construct() {
