@@ -21,7 +21,7 @@ function Live_Cache_Obj() {
 
 	// to customize what happens when a value is updated, set a callback for that key
 	this.setCallback = function (key, callback ) {
-		if (typeof callbacks[key] == "undefined") {
+		if (undefined === callbacks[key]) {
 			callbacks[key] = jQuery.Callbacks( "unique" );
 		}
 		callbacks[key].add(callback);
@@ -32,14 +32,14 @@ function Live_Cache_Obj() {
 			url: ajaxurl + '/live_cache_check/' + timeStamp + '/',
 			sucess: function (data, s, resp) {
 				var time = resp.getResponseHeader('Date').split(" ")[4];
-				// check our special variable refresh_rate - if it is not set we need to set a default
-				if ( typeof data['refresh_rate'] === "undefined" || data['refresh_rate'] < minRefresh ){
+				// check our special variable refresh_rate - if it is not set, we need to set a default
+				if ( undefined === data['refresh_rate'] || data['refresh_rate'] < minRefresh ){
 					data['refresh_rate'] = minRefresh * 2;
 				}
 				// look only at the tens place of the second counter to refresh cache every ten seconds.
 				timeStamp = time.substr(0,2) + time.substr(3,2) + time.substr(6,1);
 				jQuery.each(data, function(key, value) {
-					if ( typeof callbacks[key] !== "undefined" && (typeof values[key] == "undefined" || values[key] !== value) ){
+					if ( undefined !== callbacks[key] && (undefined === values[key] || values[key] !== value) ){
 						callbacks[key].fire(key, value); //pass key and value so that we can use the same callback for multiple keys
 					}
 				});
