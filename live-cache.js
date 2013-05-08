@@ -30,7 +30,7 @@ function Live_Cache_Obj() {
 	this.check = function () {
 		jQuery.ajax({
 			url: ajaxurl + '/live_cache_check/' + timeStamp + '/',
-			sucess: function (data, s, resp) {
+			success: function (data, s, resp) {
 				var time = resp.getResponseHeader('Date').split(" ")[4];
 				// check our special variable refresh_rate - if it is not set, we need to set a default
 				if ( undefined === data['refresh_rate'] || data['refresh_rate'] < minRefresh ){
