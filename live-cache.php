@@ -21,6 +21,13 @@ class Live_Cache {
 	var $show_options = true;
 	var $show_widget = true;
 	var $minimum_refresh_rate = 60; // if you lower this here, check minRefresh in live-cache.js
+
+	/**
+	 * Data container
+	 *
+	 * @var bool|array
+	 */
+	var $data = false;
 	
 	// Check for live_cache_check on init. If set return cached value
 	public function __construct() {
@@ -31,7 +38,7 @@ class Live_Cache {
 		if ( isset( $_SERVER['REQUEST_URI'] ) && strpos( $_SERVER['REQUEST_URI'], 'live_cache_check' ) ) {
 			header( 'Content-Type: application/json' );
 			nocache_headers(); //essential for getting date that is used for incrementing the timestamp
-			echo json_encode( (array) get_option( 'live_cache' ) );
+			echo json_encode( (array) $this->get_cache() );
 			die();
 		}
 		
@@ -45,6 +52,7 @@ class Live_Cache {
 		 */
 		add_action( 'live_cache_set_value', array( $this, 'live_cache_set_value' ), 10, 2 );
 		add_filter( 'live_cache_get_value', array( $this, 'live_cache_get_value' ), 10, 2 );
+		add_action( 'shutdown', array( $this, 'live_cache_persist' ) );
 
 		// Demo code and a small widget to make this plug-in do something fresh out of the box
 		if ( $this->show_widget )
@@ -80,21 +88,21 @@ class Live_Cache {
 	}
 
 	public function live_cache_set_value( $key, $value ) {
-		$live_cache = get_option( 'live_cache' );
+		$live_cache = $this->get_cache();
 		$key = sanitize_key( $key );
 
 		// Set value. Create option if necessary.
 		if ( is_array( $live_cache ) ) { 
 			$live_cache[$key] = sanitize_text_field( $value );
-			update_option( 'live_cache', $live_cache );
 		} else {
 			$live_cache = array( $key => sanitize_text_field( $value ) );
-			add_option( 'live_cache', $live_cache, '', true );
 		}
+
+		$this->data = $live_cache;
 	}
 
 	public function live_cache_get_value( $value, $key ) {
-		$live_cache = get_option( 'live_cache' );
+		$live_cache = $this->get_cache();
 		$key = sanitize_key( $key );
 
 		// Get value if available.
@@ -102,6 +110,41 @@ class Live_Cache {
 			$value = $live_cache[$key];
 
 		return $value;
+	}
+
+	/**
+	 * Get the Live Cache data either from the advanced cache or the database.
+	 *
+	 * @return bool|array False on failure.
+	 */
+	protected function get_cache() {
+		if ( false === $this->data ) {
+			$this->data = wp_cache_get( 'live_cache' );
+
+			if ( false === $this->data ) {
+				$this->data = get_option( 'live_cache' );
+
+				if ( false === $this->data ) {
+					$this->data = array();
+				} else {
+					wp_cache_set( 'live_cache', $this->data );
+				}
+			}
+		}
+
+		return $this->data;
+	}
+
+	/**
+	 * Finally save the data in the cache on shutdown (so we only save once).
+	 */
+	public function live_cache_persist() {
+		// Flush saved data.
+		delete_option( 'live_cache' );
+
+		// Store the data
+		wp_cache_set( 'live_cache', $this->data );
+		add_option( 'live_cache', $this->data, '', 'no' );
 	}
 
 	public function settings_field_refresh_rate() {
