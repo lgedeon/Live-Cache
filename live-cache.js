@@ -9,7 +9,8 @@
 				callbacks = [],
 				timeStamp = 1,
 				minRefresh = 60,
-				errs = 0;
+				errs = 0,
+				runCache = null;
 
 		this.auto_updates = LC.auto_updates;
 
@@ -27,28 +28,37 @@
 		};
 
 		this.check = function () {
-			$.ajax({
-				url     : ajaxurl + '/live_cache_check/' + timeStamp + '/',
-				success : function (data, s, resp) {
-					var time = resp.getResponseHeader('Date').split(" ")[4];
-					// check our special variable refresh_rate - if it is not set, we need to set a default
-					if (undefined === data['refresh_rate'] || data['refresh_rate'] < minRefresh) {
-						data['refresh_rate'] = minRefresh * 2;
+			if (runCache === undefined) {
+				$.each(self.auto_updates, function () {
+					if (!runCache && $(this).length) {
+						runCache = true;
 					}
-					// look only at the tens place of the second counter to refresh cache every ten seconds.
-					timeStamp = time.substr(0, 2) + time.substr(3, 2) + time.substr(6, 1);
-					$.each(data, function (key, value) {
-						if (undefined !== callbacks[key] && (undefined === values[key] || values[key] !== value)) {
-							callbacks[key].fire(key, value); //pass key and value so that we can use the same callback for multiple keys
+				});
+			}
+			if (runCache) {
+				$.ajax({
+					url     : ajaxurl + '/live_cache_check/' + timeStamp + '/',
+					success : function (data, s, resp) {
+						var time = resp.getResponseHeader('Date').split(" ")[4];
+						// check our special variable refresh_rate - if it is not set, we need to set a default
+						if (undefined === data['refresh_rate'] || data['refresh_rate'] < minRefresh) {
+							data['refresh_rate'] = minRefresh * 2;
 						}
-					});
-					values = data;
-				},
-				dataType: "json",
-				error   : function () {
-					callbacks['refresh_rate'].fire('refresh_rate', minRefresh * ++errs);
-				}
-			});
+						// look only at the tens place of the second counter to refresh cache every ten seconds.
+						timeStamp = time.substr(0, 2) + time.substr(3, 2) + time.substr(6, 1);
+						$.each(data, function (key, value) {
+							if (undefined !== callbacks[key] && (undefined === values[key] || values[key] !== value)) {
+								callbacks[key].fire(key, value); //pass key and value so that we can use the same callback for multiple keys
+							}
+						});
+						values = data;
+					},
+					dataType: "json",
+					error   : function () {
+						callbacks['refresh_rate'].fire('refresh_rate', minRefresh * ++errs);
+					}
+				});
+			}
 		};
 	}
 
