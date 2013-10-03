@@ -28,7 +28,7 @@
 		};
 
 		this.check = function () {
-			if (undefined === runCache) {
+			if (undefined === runCache || null === runCache) {
 				$.each(self.auto_updates, function () {
 					if (!runCache && $(this).length) {
 						runCache = true;
