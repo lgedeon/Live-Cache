@@ -30,7 +30,8 @@
 		this.check = function () {
 			if (undefined === runCache || null === runCache) {
 				$.each(self.auto_updates, function () {
-					if (!runCache && $(this).length) {
+					var selector = "" + this;
+					if (!runCache && $(selector).length) {
 						runCache = true;
 					}
 				});
