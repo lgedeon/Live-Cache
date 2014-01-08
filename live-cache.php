@@ -15,12 +15,27 @@
  */
 
 class Live_Cache {
-	
-	// set $show_options and/or $show_widget to false if you are including in another project and want to handle this differently
-	// todo make filterable or pass parameters into construct
-	var $show_options = true;
-	var $show_widget = true;
-	var $minimum_refresh_rate = 60; // if you lower this here, check minRefresh in live-cache.js
+
+	/**
+	 * Set to false with the 'live_cache_show_options' filter if you want to handle things differently
+	 *
+	 * @var bool
+	 */
+	var $show_options;
+
+	/**
+	 * Set to false with the 'live_cache_show_options' filter if you want to handle things differently
+	 *
+	 * @var bool
+	 */
+	var $show_widget;
+
+	/**
+	 * If you lower this value (using the 'live_cache_min_refresh_rate' filter, check minRefresh in live-cache.js
+	 *
+	 * @var int
+	 */
+	var $minimum_refresh_rate; // if you lower this here, check minRefresh in live-cache.js
 
 	/**
 	 * Data container
@@ -28,9 +43,19 @@ class Live_Cache {
 	 * @var bool|array
 	 */
 	var $data = false;
-	
-	// Check for live_cache_check on init. If set return cached value
+
+	/**
+	 * Check for live_cache_check on init. If set return cached value
+	 *
+	 * @uses apply_filters()
+	 * @uses add_action()
+	 * @uses add_filter()
+	 */
 	public function __construct() {
+		// Setup default options
+		$this->show_options = apply_filters( 'live_cache_show_options', true );
+		$this->show_widget = apply_filters( 'live_cache_show_widget', true );
+		$this->minimum_refresh_rate = (int) apply_filters( 'live_cache_min_refresh_rate', 60 );
 
 		/* By running this check as soon as the class is initialized instead of on action,
 		 * we can skip most of the theme being loaded. ouput and die.
@@ -55,10 +80,17 @@ class Live_Cache {
 		add_action( 'shutdown', array( $this, 'live_cache_persist' ) );
 
 		// Demo code and a small widget to make this plug-in do something fresh out of the box
-		if ( $this->show_widget )
+		if ( $this->show_widget ) {
 			require_once( __DIR__ . '/live-cache-widget.php' );
+		}
 	}
 
+	/**
+	 * Add scripts and localized variables to the admin.
+	 *
+	 * @uses wp_enqueue_script()
+	 * @uses wp_localize_script()
+	 */
 	public function wp_enqueue_scripts() {
 		// embed the javascript file that makes the AJAX request
 		wp_enqueue_script( 'live-cache', plugin_dir_url( __FILE__ ) . 'live-cache.js', array( 'jquery' ) );
@@ -71,13 +103,25 @@ class Live_Cache {
 		 * Note: no point in passing a timestamp here. It will get cached and be as out of date as the rest. that is
 		 * fine. we are getting timestamp from http response headers.
 		 */
-		wp_localize_script( 'live-cache', 'Live_Cache', array( 'ajaxurl' => get_bloginfo('url'), 'auto_updates' => apply_filters( 'live_cache_auto_updates', array() ) ) );
+		wp_localize_script( 'live-cache', 'Live_Cache', array( 'ajaxurl' => get_bloginfo( 'url' ), 'auto_updates' => apply_filters( 'live_cache_auto_updates', array() ) ) );
 	}
 
+	/**
+	 * Initialize rewrite rules.
+	 *
+	 * @uses add_rewrite_rule()
+	 */
 	public function init() {
 		add_rewrite_rule( '^live_cache_check/([\d]+)/?', 'index.php?live_cache_check=$matches[0]', 'top' );
 	}
 
+	/**
+	 * Initialize the admin interface.
+	 *
+	 * @uses register_setting()
+	 * @uses add_settings_section()
+	 * @uses add_settings_field()
+	 */
 	public function admin_init() {
 		if ( $this->show_options ) {
 			// add refresh rate option to the reading settings page
@@ -87,6 +131,15 @@ class Live_Cache {
 		}
 	}
 
+	/**
+	 * Store a value in the cache.
+	 *
+	 * @uses sanitize_key()
+	 * @uses sanitize_text_field()
+	 *
+	 * @param string $key   Name of the cache key to set.
+	 * @param mixed  $value Value to cache.
+	 */
 	public function live_cache_set_value( $key, $value ) {
 		$live_cache = $this->get_cache();
 		$key = sanitize_key( $key );
@@ -101,13 +154,22 @@ class Live_Cache {
 		$this->data = $live_cache;
 	}
 
-	public function live_cache_get_value( $value, $key ) {
+	/**
+	 * Retrieve a value from the cache if it exists
+	 *
+	 * @param string $key   Cached value to retrieve
+	 * @param null   $value Default value to return if a value is not set in the cache.
+	 *
+	 * @return mixed|null
+	 */
+	public function live_cache_get_value( $key, $value = null ) {
 		$live_cache = $this->get_cache();
 		$key = sanitize_key( $key );
 
 		// Get value if available.
-		if ( isset( $live_cache[$key] ) )
-			$value = $live_cache[$key];
+		if ( isset( $live_cache[ $key ] ) ) {
+			$value = $live_cache[ $key ];
+		}
 
 		return $value;
 	}
@@ -147,6 +209,9 @@ class Live_Cache {
 		add_option( 'live_cache', $this->data, '', 'no' );
 	}
 
+	/**
+	 * Render the refresh rate settings field.
+	 */
 	public function settings_field_refresh_rate() {
 		$live_cache_refresh_rate = (int) get_option( 'live_cache_refresh_rate' );
 		if ( $live_cache_refresh_rate < $this->minimum_refresh_rate ) 
@@ -157,10 +222,18 @@ class Live_Cache {
 	<?php
 	}
 
+	/**
+	 * Sanitize the minimum refresh rate option.
+	 *
+	 * @param int $input
+	 *
+	 * @return int
+	 */
 	public function sanitize_options( $input ) {
 		$new_input = (int) $input;
-		if ( $new_input < $this->minimum_refresh_rate ) 
+		if ( $new_input < $this->minimum_refresh_rate ) {
 			$new_input = $this->minimum_refresh_rate;
+		}
 
 		// do live_cache_set_value action - same method that could be used by other plugins that extend this plugin.
 		do_action( 'live_cache_set_value', 'refresh_rate', $new_input );
