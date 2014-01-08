@@ -2,7 +2,7 @@
 Contributors: lgedeon, 10up, ericmann 
 Tags: live, cache, banner, ajax
 Requires at least: 3.4
-Tested up to: 3.5 beta
+Tested up to: 3.8
 Stable tag: trunk
 
 Monitors content updates on the server via ajax and pushes content to the front-end without user action. Allows site-owners to provide live updates!
@@ -27,8 +27,16 @@ OR, use the plugin interface in your WordPress admin
 Do I have to know code to use this?
 
 A: No, it will work out of the box, but we built it to make things easier for other developers, since this is a frequently needed feature as part of a larger solution.
+
 == Changelog ==
-1.0 initial release
+
+= 1.0.1 =
+
+* Keep track of whether or not we need to flush the cache.
+
+= 1.0 =
+
+* initial release
 
 ==Readme Generator== 
 
