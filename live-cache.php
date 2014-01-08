@@ -45,6 +45,13 @@ class Live_Cache {
 	var $data = false;
 
 	/**
+	 * Flag whether or not we need to save the cache, since flushing can be expensive.
+	 *
+	 * @var bool
+	 */
+	private $needs_save = false;
+
+	/**
 	 * Check for live_cache_check on init. If set return cached value
 	 *
 	 * @uses apply_filters()
@@ -152,6 +159,7 @@ class Live_Cache {
 		}
 
 		$this->data = $live_cache;
+		$this->needs_save = true;
 	}
 
 	/**
@@ -201,6 +209,11 @@ class Live_Cache {
 	 * Finally save the data in the cache on shutdown (so we only save once).
 	 */
 	public function live_cache_persist() {
+		// If we don't need to save, then skip
+		if ( ! $this->needs_save ) {
+			return;
+		}
+
 		// Flush saved data.
 		delete_option( 'live_cache' );
 
