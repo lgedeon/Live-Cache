@@ -84,7 +84,8 @@ class Live_Cache {
 		 */
 		add_action( 'live_cache_set_value', array( $this, 'live_cache_set_value' ), 10, 2 );
 		add_filter( 'live_cache_get_value', array( $this, 'live_cache_get_value' ), 10, 2 );
-		add_action( 'shutdown', array( $this, 'live_cache_persist' ) );
+		// VIP: disabled; this is causing thousands of delete/add option calls per minute (one for every uncached pageload) and tends to significantly impact site performance.
+		//add_action( 'shutdown', array( $this, 'live_cache_persist' ) );
 
 		// Demo code and a small widget to make this plug-in do something fresh out of the box
 		if ( $this->show_widget ) {
