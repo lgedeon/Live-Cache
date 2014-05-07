@@ -60,10 +60,10 @@
 						var date = resp.getResponseHeader('Date'),
 								serverTime = Math.round((new Date(date)).getTime() / 1000);
 
-						// look only at the tens place of the second counter to refresh cache every ten seconds.
-						timeStamp = formatTimestampEndpoint(int_to_timestamp(serverTime));
-
 						data.refresh_rate = getRefreshRate(data.refresh_rate || 0);
+
+						// look only at the tens place of the second counter to refresh cache every ten seconds.
+						timeStamp = formatTimestampEndpoint(int_to_timestamp(serverTime + data.refresh_rate));
 
 						$.each(data, function (key, value) {
 							if (undefined !== callbacks[key] && (undefined === values[key] || values[key] !== value)) {
