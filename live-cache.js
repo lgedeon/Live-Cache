@@ -45,6 +45,7 @@
 		};
 
 		this.check = function () {
+			var self = this;
 			if (undefined === runCache || null === runCache) {
 				$.each(self.auto_updates, function () {
 					var selector = "" + this;
@@ -58,12 +59,23 @@
 					url     : ajaxurl + '/live_cache_check/' + timeStamp + '/',
 					success : function (data, s, resp) {
 						var date = resp.getResponseHeader('Date'),
-								serverTime = Math.round((new Date(date)).getTime() / 1000);
+								serverTime = Math.round((new Date(date)).getTime() / 1000),
+								lastModified = resp.getResponseHeader('Last-Modified'),
+								lastModifiedTime;
 
 						data.refresh_rate = getRefreshRate(data.refresh_rate || 0);
 
 						// look only at the tens place of the second counter to refresh cache every ten seconds.
 						timeStamp = formatTimestampEndpoint(int_to_timestamp(serverTime + data.refresh_rate));
+
+						if (lastModified && /\/live_cache_check\/1\/?$/.test(this.url)) {
+							lastModifiedTime = Math.round((new Date(lastModified)).getTime() / 1000);
+							if (lastModifiedTime + data.refresh_rate + 10 < serverTime) {
+								timeStamp = formatTimestampEndpoint(int_to_timestamp(serverTime));
+								self.check();
+								return;
+							}
+						}
 
 						$.each(data, function (key, value) {
 							if (undefined !== callbacks[key] && (undefined === values[key] || values[key] !== value)) {
