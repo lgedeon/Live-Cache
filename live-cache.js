@@ -8,9 +8,13 @@
 				values = [],
 				callbacks = [],
 				timeStamp = 1,
-				minRefresh = 60,
 				errs = 0,
 				runCache = null;
+
+		function getRefreshRate(rate) {
+			rate = parseInt(rate, 10);
+			return Math.max(rate, 60);
+		}
 
 		this.auto_updates = LC.auto_updates;
 
@@ -41,12 +45,12 @@
 					url     : ajaxurl + '/live_cache_check/' + timeStamp + '/',
 					success : function (data, s, resp) {
 						var time = resp.getResponseHeader('Date').split(" ")[4];
-						// check our special variable refresh_rate - if it is not set, we need to set a default
-						if (undefined === data['refresh_rate'] || data['refresh_rate'] < minRefresh) {
-							data['refresh_rate'] = minRefresh * 2;
-						}
+
 						// look only at the tens place of the second counter to refresh cache every ten seconds.
 						timeStamp = time.substr(0, 2) + time.substr(3, 2) + time.substr(6, 1);
+
+						data.refresh_rate = getRefreshRate(data.refresh_rate || 0);
+
 						$.each(data, function (key, value) {
 							if (undefined !== callbacks[key] && (undefined === values[key] || values[key] !== value)) {
 								callbacks[key].fire(key, value); //pass key and value so that we can use the same callback for multiple keys
@@ -56,7 +60,7 @@
 					},
 					dataType: "json",
 					error   : function () {
-						callbacks['refresh_rate'].fire('refresh_rate', minRefresh * ++errs);
+						callbacks['refresh_rate'].fire('refresh_rate', getRefreshRate() * ++errs);
 					}
 				});
 			}
