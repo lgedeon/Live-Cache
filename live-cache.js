@@ -57,10 +57,11 @@
 				$.ajax({
 					url     : ajaxurl + '/live_cache_check/' + timeStamp + '/',
 					success : function (data, s, resp) {
-						var time = resp.getResponseHeader('Date').split(" ")[4];
+						var date = resp.getResponseHeader('Date'),
+								serverTime = Math.round((new Date(date)).getTime() / 1000);
 
 						// look only at the tens place of the second counter to refresh cache every ten seconds.
-						timeStamp = time.substr(0, 2) + time.substr(3, 2) + time.substr(6, 1);
+						timeStamp = formatTimestampEndpoint(int_to_timestamp(serverTime));
 
 						data.refresh_rate = getRefreshRate(data.refresh_rate || 0);
 
@@ -69,6 +70,7 @@
 								callbacks[key].fire(key, value); //pass key and value so that we can use the same callback for multiple keys
 							}
 						});
+
 						values = data;
 					},
 					dataType: "json",
