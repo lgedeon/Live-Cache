@@ -16,6 +16,19 @@
 			return Math.max(rate, 60);
 		}
 
+		function formatTimestampEndpoint(int) {
+			return ('000000' + parseInt(int, 10)).slice(-6).substr(0, 5);
+		}
+
+		function int_to_timestamp(int) {
+			int %= 86400;
+			var timestamp = [];
+			timestamp[0] = ('00' + Math.floor(int / 3600)).slice(-2);
+			timestamp[1] = ('00' + Math.floor((int % 3600) / 60)).slice(-2);
+			timestamp[2] = ('00' + (int % 60)).slice(-2);
+			return timestamp.join('');
+		}
+
 		this.auto_updates = LC.auto_updates;
 
 		// schedule first check
