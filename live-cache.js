@@ -16,8 +16,8 @@
 			return Math.max(rate, 60);
 		}
 
-		function formatTimestampEndpoint(int) {
-			return ('000000' + parseInt(int, 10)).slice(-6).substr(0, 5);
+		function formatTimestampEndpoint( timestamp ) {
+			return ( '000000' + parseInt( timestamp, 10 ) ).slice( -6 ).substr( 0, 5 );
 		}
 
 		function int_to_timestamp(intValue) {
