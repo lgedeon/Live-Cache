@@ -189,7 +189,7 @@ class Live_Cache {
 	 */
 	protected function get_cache() {
 		if ( false === $this->data ) {
-			$this->data = wp_cache_get( 'live_cache' );
+			$this->data = $this->get_cached_data();
 
 			if ( false === $this->data ) {
 				$this->data = get_option( 'live_cache' );
@@ -260,6 +260,13 @@ class Live_Cache {
 			$use_it = (bool) apply_filters( 'live_cache_use_object_cache_backend', true );
 		}
 		return $use_it;
+	}
+
+	protected function get_cached_data() {
+		if ( $this->use_object_cache() ) {
+			return wp_cache_get( 'live_cache' );
+		}
+		return false;
 	}
 
 	protected function set_cached_data() {
