@@ -197,7 +197,7 @@ class Live_Cache {
 				if ( false === $this->data ) {
 					$this->data = array();
 				} else {
-					$this->set_cache();
+					$this->set_cached_data();
 				}
 			}
 		}
@@ -218,7 +218,7 @@ class Live_Cache {
 		delete_option( 'live_cache' );
 
 		// Store the data
-		$this->set_cache();
+		$this->set_cached_data();
 		add_option( 'live_cache', $this->data, '', 'no' );
 	}
 
@@ -254,8 +254,18 @@ class Live_Cache {
 		return $new_input;
 	}
 
-	protected function set_cache() {
-		wp_cache_set( 'live_cache', $this->data, '', $this->minimum_refresh_rate );
+	protected function use_object_cache() {
+		static $use_it;
+		if ( ! is_bool( $use_it ) ) {
+			$use_it = (bool) apply_filters( 'live_cache_use_object_cache_backend', true );
+		}
+		return $use_it;
+	}
+
+	protected function set_cached_data() {
+		if ( $this->use_object_cache() ) {
+			wp_cache_set( 'live_cache', $this->data, '', $this->minimum_refresh_rate );
+		}
 	}
 
 }
