@@ -255,11 +255,7 @@ class Live_Cache {
 	}
 
 	protected function use_object_cache() {
-		static $use_it;
-		if ( ! is_bool( $use_it ) ) {
-			$use_it = (bool) apply_filters( 'live_cache_use_object_cache_backend', true );
-		}
-		return $use_it;
+		return (bool) apply_filters( 'live_cache_use_object_cache_backend', true );
 	}
 
 	protected function get_cached_data() {
