@@ -189,7 +189,7 @@ class Live_Cache {
 	 */
 	protected function get_cache() {
 		if ( false === $this->data ) {
-			$this->data = wp_cache_get( 'live_cache' );
+			$this->data = $this->get_cached_data();
 
 			if ( false === $this->data ) {
 				$this->data = get_option( 'live_cache' );
@@ -197,7 +197,7 @@ class Live_Cache {
 				if ( false === $this->data ) {
 					$this->data = array();
 				} else {
-					wp_cache_set( 'live_cache', $this->data );
+					$this->set_cached_data();
 				}
 			}
 		}
@@ -218,7 +218,7 @@ class Live_Cache {
 		delete_option( 'live_cache' );
 
 		// Store the data
-		wp_cache_set( 'live_cache', $this->data );
+		$this->set_cached_data();
 		add_option( 'live_cache', $this->data, '', 'no' );
 	}
 
@@ -252,6 +252,40 @@ class Live_Cache {
 		do_action( 'live_cache_set_value', 'refresh_rate', $new_input );
 
 		return $new_input;
+	}
+
+	/**
+	 * Allow code to turn off the object caching layer of live cache
+	 *
+	 * @return bool
+	 */
+	protected function use_object_cache() {
+		return (bool) apply_filters( 'live_cache_use_object_cache_backend', true );
+	}
+
+	/**
+	 * Get the data from object cache.
+	 *
+	 * If object caching is turned off, this function will simply return false
+	 *
+	 * @return bool|mixed
+	 */
+	protected function get_cached_data() {
+		if ( $this->use_object_cache() ) {
+			return wp_cache_get( 'live_cache' );
+		}
+		return false;
+	}
+
+	/**
+	 * Set the cache data in the object cache (if we're using it)
+	 *
+	 * Also sets the expiration of the cached data to the minimum refresh rate
+	 */
+	protected function set_cached_data() {
+		if ( $this->use_object_cache() ) {
+			wp_cache_set( 'live_cache', $this->data, '', $this->minimum_refresh_rate );
+		}
 	}
 
 }
