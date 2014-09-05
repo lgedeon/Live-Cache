@@ -254,10 +254,22 @@ class Live_Cache {
 		return $new_input;
 	}
 
+	/**
+	 * Allow code to turn off the object caching layer of live cache
+	 *
+	 * @return bool
+	 */
 	protected function use_object_cache() {
 		return (bool) apply_filters( 'live_cache_use_object_cache_backend', true );
 	}
 
+	/**
+	 * Get the data from object cache.
+	 *
+	 * If object caching is turned off, this function will simply return false
+	 *
+	 * @return bool|mixed
+	 */
 	protected function get_cached_data() {
 		if ( $this->use_object_cache() ) {
 			return wp_cache_get( 'live_cache' );
@@ -265,6 +277,11 @@ class Live_Cache {
 		return false;
 	}
 
+	/**
+	 * Set the cache data in the object cache (if we're using it)
+	 *
+	 * Also sets the expiration of the cached data to the minimum refresh rate
+	 */
 	protected function set_cached_data() {
 		if ( $this->use_object_cache() ) {
 			wp_cache_set( 'live_cache', $this->data, '', $this->minimum_refresh_rate );
