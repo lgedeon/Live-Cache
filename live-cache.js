@@ -20,8 +20,8 @@
 			return Math.max(rate, 60);
 		}
 
-		function formatTimestampEndpoint(timestamp) {
-			return ( '000000' + parseInt(timestamp, 10) ).slice(-6).substr(0, 5);
+		function formatTimestampEndpoint( timestamp ) {
+			return ( '000000' + parseInt( timestamp, 10 ) ).slice( -6 ).substr( 0, 5 );
 		}
 
 		function int_to_timestamp(intValue) {
@@ -123,7 +123,7 @@
 	 * Also a handy usage demo
 	 */
 	liveCache.setCallback('refresh_rate', function (key, value) {
-		clearInterval(liveCache.timer);
+		clearTimeout(liveCache.timer);
 		liveCache.timer = setTimeout(function () {
 			liveCache.check();
 		}, value * 1000);
