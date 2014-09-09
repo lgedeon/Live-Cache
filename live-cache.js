@@ -13,11 +13,15 @@
 
 		function getRefreshRate(rate) {
 			rate = parseInt(rate, 10);
+			// If somehow a non-integer can get through this check, I give up on JS forever
+			if (isNaN(rate) || Infinity === rate || 'number' !== typeof rate) {
+				rate = 60;
+			}
 			return Math.max(rate, 60);
 		}
 
-		function formatTimestampEndpoint( timestamp ) {
-			return ( '000000' + parseInt( timestamp, 10 ) ).slice( -6 ).substr( 0, 5 );
+		function formatTimestampEndpoint(timestamp) {
+			return ( '000000' + parseInt(timestamp, 10) ).slice(-6).substr(0, 5);
 		}
 
 		function int_to_timestamp(intValue) {
@@ -87,7 +91,7 @@
 					},
 					dataType: "json",
 					error   : function () {
-						callbacks['refresh_rate'].fire('refresh_rate', getRefreshRate() * ++errs);
+						callbacks['refresh_rate'].fire('refresh_rate', getRefreshRate(60) * ++errs);
 					}
 				});
 			}
