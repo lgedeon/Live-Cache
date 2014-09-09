@@ -36,7 +36,7 @@
 		this.auto_updates = LC.auto_updates;
 
 		// schedule first check
-		this.timer = setInterval(function () {
+		this.timer = setTimeout(function () {
 			self.check();
 		}, 10000);
 
@@ -124,7 +124,7 @@
 	 */
 	liveCache.setCallback('refresh_rate', function (key, value) {
 		clearInterval(liveCache.timer);
-		liveCache.timer = setInterval(function () {
+		liveCache.timer = setTimeout(function () {
 			liveCache.check();
 		}, value * 1000);
 	});
