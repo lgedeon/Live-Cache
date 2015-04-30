@@ -5,7 +5,9 @@
 	function Live_Cache_Obj() {
 		var self = this,
 				ajaxurl = LC.ajaxurl, // ajaxurl and auto_updates values originally set by localize script
-				values = [],
+				values = {
+					refresh_rate: 60 // Initialize to 60s here too
+				},
 				callbacks = [],
 				timeStamp = 1,
 				errs = 0,
@@ -39,6 +41,19 @@
 		this.timer = setTimeout(function () {
 			self.check();
 		}, 10000);
+
+		this.reschedule = function() {
+			// If we've had less than three errors, continue to reschedule, otherwise just kill the live cache check
+			if (errs < 3) {
+				// Clear any existing timeout
+				clearTimeout(self.timer);
+
+				// Set a new timeout, for 60s (or longer) in the future
+				self.timer = setTimeout(function() {
+					self.check();
+				}, 1000 * Math.max(60, getRefreshRate(values.refresh_rate)));
+			}
+		};
 
 		// to customize what happens when a value is updated, set a callback for that key
 		this.setCallback = function (key, callback) {
@@ -91,9 +106,11 @@
 					},
 					dataType: "json",
 					error   : function () {
-						callbacks['refresh_rate'].fire('refresh_rate', getRefreshRate(60) * ++errs);
+						// On an error, increase the refresh rate a little
+						values.refresh_rate = getRefreshRate(60) * ++errs;
 					}
-				});
+				})
+					.always(self.reschedule);
 			}
 		};
 	}
@@ -104,7 +121,7 @@
 
 	function liveCacheCallbackGenerator(lc) {
 		return function (k, v) {
-			$(lc.auto_updates[k]).html(v);
+			$(lc.auto_updates[k]).text(v);
 		};
 	}
 
@@ -117,15 +134,4 @@
 		}
 	}
 
-
-	/*
-	 * Use our own system - reset our timer if the refresh rate has been updated
-	 * Also a handy usage demo
-	 */
-	liveCache.setCallback('refresh_rate', function (key, value) {
-		clearTimeout(liveCache.timer);
-		liveCache.timer = setTimeout(function () {
-			liveCache.check();
-		}, value * 1000);
-	});
 }(this, this.jQuery, this.Live_Cache));
